@@ -28,8 +28,8 @@ class search_followers:
         while nb_followers<max_followers:
             
 
-            follow_buttons = WebDriverWait(driver, 15).until(
-                EC.presence_of_all_elements_located((By.CLASS_NAME, "artdeco-button__text"))
+            follow_connect_buttons = WebDriverWait(driver, 15).until(
+                EC.presence_of_all_elements_located((By.CLASS_NAME,"artdeco-button artdeco-button--2 artdeco-button--secondary ember-view"))
             )
 
             print(f"Number of follow buttons found: {len(follow_buttons)}")
