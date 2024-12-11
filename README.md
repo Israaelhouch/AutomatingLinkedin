@@ -18,7 +18,7 @@ This tool automates interactions on LinkedIn by performing actions like followin
 
 Before running the tool, make sure you have:
 
-- "skills.csv" file  in the same directory ("skills_data.py" not important it was used to create "skills.csv" file )
+- "skills.csv" file  in the same directory
 
 Unneeded files:
 - "skills_data.py" file was used to create "skills.csv" file 
