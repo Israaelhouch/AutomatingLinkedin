@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 
 ## LinkedIn Automation
 
@@ -22,3 +23,9 @@ Before running the tool, make sure you have:
 Unneeded files:
 - "skills_data.py" file was used to create "skills.csv" file 
 - "Login.py" file was used to get cookies of a specefic account 
+=======
+بوت للينكدين يعمل الآتي : 
+ 
+1-نعطيه المجالات المهتم بيهم وهو يعملو follow w connect لاشهر وحيد ٫ طبعا ميلزمش يعاود يجيبهملي في الايامات المقبلة 
+كيفاش باش يرتبهم ؟ فما badge تعملها لينكدين نحب تجيبلي العباد اللي عندهم البادج هذي كيما هكة 
+>>>>>>> origin/main
