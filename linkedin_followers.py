@@ -8,96 +8,180 @@ import time
 import pickle
 import pandas as pd
 
-
-def load_cookies(driver, pickle_file):
-    with open(pickle_file, 'rb') as handle:
-        cookies = pickle.load(handle)
-    return cookies
-
-      
-class search_followers:
-    def __init__(self, skill):
+   
+class search_profiles:
+    
+    def __init__(self, skill=None, action=None):
         self.skill = skill
-    def find(self):
-        nb_followers = 0
-        max_followers = 30
-        driver.get(
-            f"https://www.linkedin.com/search/results/people/?keywords={self.skill}%20top%20voices&origin=CLUSTER_EXPANSION"
-        )
+        self.action = action
+        
+    def choose_skill(self):
+        skills_df = pd.read_csv("skills.csv")
+        fields=skills_df.columns
 
-        while nb_followers<max_followers:
+        print("available fields are:\n ")
+        for i, field in enumerate(fields, start=0 ):
+            print(f"{i}: {field}")
             
+        n = int(input("\nEnter number for the field: "))
+        while n < 1 or n > len(fields):
+            n = int(input("Invalid number, please enter again:\n"))
+            
+        print(f"\nSkills in this field are:\n {skills_df.iloc[:, n-1]}")
+        
+        i = int(input("\nenter a number for skills:"))
+        while i < 0 or i > len(skills_df):
+            i = int(input("\nInvalid number, please enter again: "))
+        
+        self.skill = skills_df.iloc[i, n-1]
+        print(f"\nYou are looking for {self.skill} skill.\n")
+        
+        print("action to choose:\n1- follow\n2- connect")
+        nb=int(input("enter the number: "))
+        if nb==1:
+            self.action ="Follow"
+        elif nb==2:
+            self.action="Connect"
+        else:
+            self.action="Follow & Connect"
 
-            follow_connect_buttons = WebDriverWait(driver, 15).until(
-                EC.presence_of_all_elements_located((By.CLASS_NAME,"artdeco-button artdeco-button--2 artdeco-button--secondary ember-view"))
-            )
+        
+    def load_cookies(self, driver, cookie_file):
+        with open(cookie_file, 'rb') as f:
+            cookies = pickle.load(f)
+        
+        driver.get("https://www.linkedin.com")
+        time.sleep(1)
+        
+        for cookie in cookies:
+            driver.add_cookie(cookie) 
+    
+    
+    
+    def follow(self, driver, profiles_list):
+        buttons = driver.find_elements(By.CLASS_NAME, "artdeco-button__text")
+        for button in buttons:
+            if button.text in ["Follow", "Suivre"]:
+                button.click()
+                time.sleep(1)
+                
+                profile_name = driver.find_element(By.TAG_NAME, 'h1').text
 
-            print(f"Number of follow buttons found: {len(follow_buttons)}")
-            for button in follow_buttons:
-                if button.text == "Follow":
+                profiles_list.append(profile_name)
+                break
+    
+    def connect(self, driver, profiles_list):
+        try:
+            buttons = driver.find_elements(By.CLASS_NAME, "artdeco-button--secondary")
+            for button in buttons:
+                if button.text in ["More", "Plus"]: 
+                    button.click()
+                    try:
+                        button_connect = WebDriverWait(driver, 10).until(
+                            EC.presence_of_all_elements_located((By.CLASS_NAME, "artdeco-dropdown__item"))
+                        )
+                        for btn in button_connect:
+                            if btn.text == "Connect":
+                                profile_name = driver.find_element(By.XPATH, "//h1").text
+                                print(f"Connecting to profile: {profile_name}")
+                                btn.click()
+                                profiles_list.append(profile_name)
+                                break
+                    except Exception as e:
+                        continue
+                    break
+
+        except Exception as e:
+            print("Error in connect process")       
+   
+    def engagement(self, driver):
+        nb_followers= driver.find_element(By.CLASS_NAME, "text-body-small t-black--light inline-block").text
+        nb = nb_followers[0: nb_followers.find(" ")]
+        
+        print("nb foloow:", nb)
+        last_posts = driver.find(By.CLASS_NAME,"pv0 ph5")
+        reacts = last_posts.find_elements(By.CLASS_NAME, "social-details-social-counts__reactions-count")
+        s=0
+        for react in reacts:
+            s += react
+        engagement_rate = (s / nb)*100
+        print("rate:", engagement_rate)
+        
+        return( nb>= 10000 and engagement >=1 )
+           
+    
+    def find(self):
+        driver = webdriver.Chrome()
+        self.load_cookies(driver, 'Cookies.pkl')
+        max_profiles = 8
+        profiles_list = []
+        i = 1 
+
+        try:
+            while len(profiles_list) < max_profiles:
+
+                url = f"https://www.linkedin.com/search/results/people/?keywords={self.skill}%20top%20voices&origin=CLUSTER_EXPANSION&page={i}&sid=MaO"
+                driver.get(url)
+                driver.maximize_window()
+                time.sleep(1)
+
+
+                profiles = WebDriverWait(driver, 15).until(
+                    EC.presence_of_all_elements_located((By.CLASS_NAME, "linked-area"))
+                )
+                links = [profile.find_element(By.TAG_NAME, 'a').get_attribute('href') for profile in profiles]
+
+                for link in links:
+                    if len(profiles_list) >= max_profiles:
+                        break
+
+                    driver.get(link)
+                    time.sleep(1)
 
                     try:
-                        if driver.find_element(By.CLASS_NAME, "entity-result__badge-icon"):
-                            nb_followers += 1
-                            button.click()
-                            time.sleep(1)
-                    except Exception as e:
-                        continue    
-                else:        
-                    continue
+                        badge1 = driver.find_element(By.CLASS_NAME, "pv-top-voice-badge--button")
+                        if badge1:
+                            if self.action == "Follow":
+                                self.follow(driver, profiles_list)
+                            else:
+                                self.connect(driver, profiles_list)
+                    except Exception:
+                        try:
+                            badge2 = WebDriverWait(driver, 10).until(
+                                EC.presence_of_element_located(
+                                    (By.XPATH, '//*[@id="profile-content"]/div/div[2]/div/div/main/section[1]/div[2]/div[1]/div[2]/div/span')))
+                            if badge2:
+                                if self.action == "Follow":
+                                    self.follow(driver, profiles_list)
+                                else:
+                                    self.connect(driver, profiles_list)
+                                
+                        except Exception:
+                            try:
+                                engagement = self.engagement(driver)
+                                if engagement:
+                                    if self.action == "Follow":
+                                            self.follow(driver, profiles_list)
+                                    else:
+                                        self.connect(driver, profiles_list)
+                            except Exception:
+                                print("No engagement found.")
+                                continue
+                i += 1  
+                
+        except Exception as e:
+            print("Error occurred")
 
-            try:
-                next_button = WebDriverWait(driver, 10).until(
-                    EC.element_to_be_clickable(
-                        (By.CLASS_NAME, "artdeco-pagination__button--next")
-                    )
-                )
-                next_button.click()
-                time.sleep(2)
-            except Exception as next_error:
-                break
-  
-        
+        finally:
+            driver.quit()
+            print(f"Total profiles followed or connected: {len(profiles_list)}")
+            print(f"List of followed or connected profiles: {profiles_list}")
 
 
 if __name__ == "__main__":
     
-
-    skills_df = pd.read_csv("skills.csv")
-    fieds=skills_df.columns
-    i=1
-    for fied in fieds:
-        print(f"{i}:{fied}")
-        i+=1
-    n= int(input("enter number for fieds:"))
-    print("\n")
-    print(f"Skills in this fied are: {skills_df.iloc[:, n-1]}")
-    i=int(input("enter a number for skills:"))
-    skill=skills_df.iloc[i,n-1]
-    print("\n")
-    print(f"searched skill is: {skill}")
-    print("\n")
-    driver = webdriver.Chrome()
-    linkedin_url = "https://www.linkedin.com/feed"
-    cookies = load_cookies(driver,'Cookies.pkl')
-    driver.get(linkedin_url)
-    driver.maximize_window()
-    
-    for cookie in cookies:
-        driver.add_cookie(cookie)
-    driver.refresh()  
-    time.sleep(1)
-    
-    search = search_followers(skill+" Top Voices")
-    search.find()
-
-    
-
-
-
-    
-    
-    
-    
+    searcher = search_profiles()
+    searcher.choose_skill() 
+    searcher.find()
 
 

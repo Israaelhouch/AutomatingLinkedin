@@ -46,13 +46,11 @@ if __name__ == "__main__":
     driver = webdriver.Chrome()
     linkedin_url = "https://www.linkedin.com/feed/?trk=guest_homepage-basic_nav-header-signin"
     
-    email = "****"
-    password = '*****'
-    
+    email = "Anasjibi@outlook.com"
+    password = 'anesanes12'
+
     cookies = login(email, password, linkedin_url)
     time.sleep(20)
     pkl_file(cookies, "Cookies.pkl")
+    print("DONE")
     driver.quit()
-    
-    
-    

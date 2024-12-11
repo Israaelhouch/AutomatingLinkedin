@@ -313,16 +313,5 @@ skills={"Professional Skills":professional_skills,
 
 skills_df=pd.DataFrame(skills)
 skills_df.to_csv('skills.csv', index=False)
-f=skills_df.columns
-i=1
-for fied in f:
-    print(f"{i}:{fied}")
-    i+=1
 
-n= int(input("enter number for fieds:"))
-print("Skills in this fied are: ")
-print(skills_df.iloc[:, n-1])
-i=int(input("enter a number for skills:"))
-skill=skills_df.iloc[i, n-1]
-print(skill)
 
