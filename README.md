@@ -30,3 +30,4 @@ Unneeded files:
 كيفاش باش يرتبهم ؟ فما badge تعملها لينكدين نحب تجيبلي العباد اللي عندهم البادج هذي كيما هكة 
 >>>>>>> origin/main
 # Linkedin-Automation
+# AutomatingLinkedin
